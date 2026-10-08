@@ -1,0 +1,25 @@
+# Python
+.venv/
+venv/
+__pycache__/
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+logs/
+
+# Terraform
+terraform/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.auto.tfvars
+secrets.tfvars
+
+# Data and secrets
+data/
+*.csv
+!dbt/seeds/*.csv
+.env
+.DS_Store
