@@ -1,2 +1,3 @@
-environment    = "dev"
-warehouse_size = "XSMALL"
+environment        = "dev"
+warehouse_size     = "XSMALL"
+dbt_rsa_public_key = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuPOO0JZVko+0oeURU3aimO6yenyRfvzl9jeXKLFUphYh7vpCaIvQg7iZaA5k3r+Z4PgfabyvErjOdxoktMmqnSaMEDtRqIsaZUPhESQ55wzyFR9Esme1ReMK8NQXPutENucutrRvYc9jACEg+y0vEdmTDAb9bbnRR18qONRqUe7kQIKx73bzMv6jXqE7ZE7akanQd2EOktRKpVqMGqhvGEMr1jFoO9XGjMgwFOrE+ELpuMlaGLibzT+iLzTT4Uqp0qDUpzRGGKxb45575bP0Aurbmx5lfJpV/qWIYh3/9A9gUzQqdPUZ8S0ym10K+ws+gk8KlVSA87VrDmVFNGSlIQIDAQAB"

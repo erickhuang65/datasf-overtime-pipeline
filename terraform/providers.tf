@@ -20,3 +20,13 @@ provider "snowflake" {
   authenticator     = "SNOWFLAKE_JWT"
   private_key       = file(pathexpand("~/.ssh/snowflake_tf_snow_key.p8"))
 }
+
+provider "snowflake" {
+  alias             = "securityadmin"
+  organization_name = local.organization_name
+  account_name      = local.account_name
+  user              = "TERRAFORM_SVC"
+  role              = "SECURITYADMIN"
+  authenticator     = "SNOWFLAKE_JWT"
+  private_key       = file(pathexpand("~/.ssh/snowflake_tf_snow_key.p8"))
+}
