@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: stg_payroll__employee_compensation
+    description: >
+      Typed and renamed employee compensation records. Contains BOTH Fiscal and Calendar
+      rows. Do not sum across year types, because the same pay appears in both.
+      One row per employee appointment per year; no employee ID exists in the source.
+    columns:
+      - name: record_id
+        description: "Surrogate key: hash of source file + row number."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: year_type
+        description: "'Fiscal' (July–June) or 'Calendar' (Jan–Dec). The same pay appears under both."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Fiscal', 'Calendar']
+
+      - name: pay_year
+        description: "Fiscal or calendar year, depending on year_type."
+        data_tests:
+          - not_null
+
+      - name: department_code
+        description: "Department code. 2 FY2017 records are null; labeled 'UNKNOWN' in marts."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: job_code
+        description: "Job classification code. Peer group for the overtime rule."
+        data_tests:
+          - not_null
+
+      - name: employee_name
+        description: "Employee name. Numeric IDs instead of names before 2017."
+
+      - name: employment_type
+        description: "Appointment type. Not reported before 2017."
+        data_tests:
+          - not_null:
+              config:
+                where: "pay_year >= 2017"
+          - accepted_values:
+              arguments:
+                values: ['Permanent Civil Service', 'Permanent Exempt', 'Temporary Exempt',
+                         'Temporary Civil Service', 'Temporary Provisional', 'Other']
+              config:
+                where: "pay_year >= 2017"
+
+# dbt_utils test for base salary 
+      - name: salaries
+        description: "Base salary paid in dollars. Negative values are payroll adjustments, kept as-is."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              config:
+                severity: warn
+
+      - name: overtime
+        description: "Overtime pay in dollars. Negative values are payroll adjustments, kept as-is."
+        data_tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+              config:
+                severity: warn
+
+      - name: payroll_hours
+        description: >
+          Hours recorded in payroll. Includes regular paid hours (incl. leave) and overtime hours;
+          may include other paid credits. Not verified as hours physically worked. Not reported before 2017.
+        data_tests:
+          - not_null:
+              config:
+                where: "pay_year >= 2017"
+
+      - name: has_detail_fields
+        description: "True from 2017 on, when names, hours and employment type are reported."

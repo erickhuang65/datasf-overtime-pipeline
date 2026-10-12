@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: int_compensation__fiscal
+    description: >
+      Fiscal-year compensation records only (July–June). The analysis base for all marts.
+      Calendar-year rows are excluded because they repeat the same pay over a different window.
+    columns:
+      - name: record_id
+        data_tests:
+          - unique
+          - not_null
+      - name: fiscal_year
+        description: "Fiscal year, e.g. 2026 = July 2025 – June 2026."
+        data_tests:
+          - not_null

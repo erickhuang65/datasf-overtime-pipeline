@@ -63,3 +63,33 @@ resource "snowflake_grant_privileges_to_account_role" "transformer_analytics_db"
     object_name = snowflake_database.analytics.name
   }
 }
+
+# Snowflake grant loader permission
+resource "snowflake_grant_privileges_to_account_role" "loader_wh" {
+  provider          = snowflake.securityadmin
+  account_role_name = snowflake_account_role.loader.name
+  privileges        = ["USAGE"]
+  on_account_object {
+    object_type = "WAREHOUSE"
+    object_name = snowflake_warehouse.transform.name
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "loader_raw_db" {
+  provider          = snowflake.securityadmin
+  account_role_name = snowflake_account_role.loader.name
+  privileges        = ["USAGE"]
+  on_account_object {
+    object_type = "DATABASE"
+    object_name = snowflake_database.raw.name
+  }
+}
+
+resource "snowflake_grant_privileges_to_account_role" "loader_raw_schema" {
+  provider          = snowflake.securityadmin
+  account_role_name = snowflake_account_role.loader.name
+  privileges        = ["USAGE", "CREATE TABLE", "CREATE STAGE", "CREATE FILE FORMAT"]
+  on_schema {
+    schema_name = snowflake_schema.payroll.fully_qualified_name
+  }
+}

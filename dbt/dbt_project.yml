@@ -30,7 +30,19 @@ clean-targets:         # directories to be removed by `dbt clean`
 # directory as views. These settings can be overridden in the individual model
 # files using the `{{ config(...) }}` macro.
 models:
-  datasf_overtime_pipeline:
-    # Config indicated by + and applies to all files under models/example/
-    example:
+  datasf_overtime_pipeline:        # must match the `name:` at the top of this file
+    staging:
       +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+# staging rules
+vars: 
+  ot_extra_hours_threshold: 1040   # 20 extra hours/week beyond the job norm
+  min_job_peers: 20                # minimum baseline records for a job median
+  fallback_annual_hours: 2080      # baseline when a job is too small

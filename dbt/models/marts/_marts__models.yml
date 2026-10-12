@@ -1,0 +1,147 @@
+version: 2
+
+models:
+  # Q1: fact table: employee overtime fact table
+  - name: fct_employee_overtime
+    description: >
+      Q1: one row per fiscal-year compensation record, with a flag for unusually high overtime.
+      Rule: payroll hours exceed the normal hours for the same job and fiscal year by more than
+      1,040 hours (20 extra hours/week). Normal hours = median payroll hours of Permanent Civil
+      Service records in that job and year; jobs with fewer than 20 such records use 2,080.
+      The flag is null when hours are not reported (before FY2017).
+      Known limitation: small jobs on longer schedules (e.g. Senior Deputy Sheriff) fall back
+      to 2,080, and jobs dominated by partial-year records can have a median below 2,080;
+      both overstate hours_above_norm. Future fix: job-family fallback and a 2,080 floor.
+    data_tests:
+      - dbt_utils.equal_rowcount:
+          arguments:
+            compare_model: ref('int_compensation__fiscal')
+    columns:
+      - name: record_id
+        description: "Surrogate key: hash of source file + row number."
+        data_tests:
+          - unique
+          - not_null
+
+      - name: fiscal_year
+        description: "Fiscal year, e.g. 2026 = July 2025 – June 2026."
+
+      - name: employment_type
+        description: "Appointment type. 'Not reported' before 2017."
+
+      - name: department_code
+        description: "Department code. 'UNKNOWN' for 2 FY2017 records with no department."
+
+      - name: salaries
+        description: "Base salary paid in dollars. Negative values are payroll adjustments."
+
+      - name: overtime
+        description: "Overtime pay in dollars. Negative values are payroll adjustments."
+
+      - name: other_salaries
+        description: "Pay that is neither base salary nor overtime (e.g. premiums, lump sums, allowances)."
+
+      - name: total_salary
+        description: "salaries + overtime + other_salaries."
+
+      - name: ot_to_salary_ratio
+        description: "Overtime ÷ base salary (excludes other_salaries). E.g. 0.50 = overtime equal to half of regular pay."
+
+      - name: payroll_hours
+        description: "Hours recorded in payroll; not verified as hours physically worked."
+
+      - name: job_median_hours
+        description: "Median payroll hours for Permanent Civil Service records in the same job and fiscal year."
+
+      - name: job_peer_count
+        description: "Number of Permanent Civil Service records with hours in the same job and fiscal year."
+
+      - name: baseline_hours
+        description: "Normal hours used for comparison: job median, or 2,080 if fewer than 20 peers."
+        data_tests:
+          - not_null
+
+      - name: baseline_source
+        description: "'job_median' or 'fallback' (fewer than 20 peers)."
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['job_median', 'fallback']
+
+      - name: hours_above_norm
+        description: "payroll_hours minus baseline_hours. Negative means below the job's norm."
+
+      - name: is_unusually_high_ot
+        description: >
+          True when hours_above_norm exceeds 1,040 (configurable: ot_extra_hours_threshold).
+          Null when hours are not reported. Indicates a record worth reviewing, not wrongdoing.
+        data_tests:
+          - not_null:
+              config:
+                where: "fiscal_year >= 2017"
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+
+      - name: overtime_flag_label
+        description: "Text version of the flag for dashboards: 'Unusually high', 'Within normal range', or 'Hours not reported'."
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['Unusually high', 'Within normal range', 'Hours not reported']
+
+
+  # Q2: fact table: department overtime aggregate
+  - name: agg_department_overtime
+    description: >
+      Q2: salary and overtime totals by department and fiscal year. Answers which departments
+      have the most overtime in total (total_overtime) and normalized per employee
+      (overtime_per_employee). Contains only aggregates; safe for public access.
+      Note: some department codes changed over time (e.g. DSS→HSA, ECD→DEM in 2018),
+      which affects multi-year trends for those departments.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: ['fiscal_year', 'department_code']
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "flagged_records <= employee_records"
+    columns:
+      - name: fiscal_year
+        description: "Fiscal year, e.g. 2026 = July 2025 – June 2026."
+        data_tests:
+          - not_null
+
+      - name: department_code
+        description: "Department code. 'UNKNOWN' for records with no department."
+        data_tests:
+          - not_null
+
+      - name: department_name
+        description: "Most recent name used for this department code."
+
+      - name: employee_records
+        description: "Number of compensation records (used as headcount; no employee ID exists)."
+
+      - name: employees_with_ot
+        description: "Records with overtime > 0."
+
+      - name: total_salaries
+        description: "Sum of base salaries."
+
+      - name: total_overtime
+        description: "Sum of overtime pay. Answers 'most overtime in total'."
+
+      - name: overtime_per_employee
+        description: "total_overtime ÷ employee_records. Answers 'most overtime normalized per employee'."
+
+      - name: overtime_pct_of_salary
+        description: "total_overtime as a percentage of total_salaries."
+
+      - name: flagged_records
+        description: "Records flagged as unusually high overtime (from fct_employee_overtime)."
+
+      - name: pct_flagged
+        description: "flagged_records as a percentage of employee_records."

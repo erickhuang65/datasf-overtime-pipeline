@@ -26,3 +26,30 @@ resource "snowflake_grant_account_role" "transformer_to_sysadmin" {
   role_name        = snowflake_account_role.transformer.name
   parent_role_name = "SYSADMIN"
 }
+
+resource "snowflake_account_role" "loader" {
+  provider = snowflake.securityadmin
+  name     = "LOADER_${local.env}"
+  comment  = "Ingestion: creates and loads raw tables"
+}
+
+resource "snowflake_service_user" "loader" {
+  provider          = snowflake.securityadmin
+  name              = "LOADER_SVC_${local.env}"
+  comment           = "Service user the ingestion script connects as"
+  default_role      = snowflake_account_role.loader.name
+  default_warehouse = snowflake_warehouse.transform.name
+  rsa_public_key    = var.loader_rsa_public_key
+}
+
+resource "snowflake_grant_account_role" "loader_to_user" {
+  provider  = snowflake.securityadmin
+  role_name = snowflake_account_role.loader.name
+  user_name = snowflake_service_user.loader.name
+}
+
+resource "snowflake_grant_account_role" "loader_to_sysadmin" {
+  provider         = snowflake.securityadmin
+  role_name        = snowflake_account_role.loader.name
+  parent_role_name = "SYSADMIN"
+}
