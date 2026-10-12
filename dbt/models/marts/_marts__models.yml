@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  # Q1: fact table: employee overtime fact table
+  # Q1: fact table, one row per compensation record
   - name: fct_employee_overtime
     description: >
       Q1: one row per fiscal-year compensation record, with a flag for unusually high overtime.
@@ -25,6 +25,12 @@ models:
 
       - name: fiscal_year
         description: "Fiscal year, e.g. 2026 = July 2025 – June 2026."
+
+      - name: employee_name
+        description: >
+          Employee name as reported (2017 onward; null before). Access design: masked
+          as J*** D*** for Leadership, unmasked for the matching department head.
+          Public roles don't get this table, only agg_department_overtime.
 
       - name: employment_type
         description: "Appointment type. 'Not reported' before 2017."
@@ -92,8 +98,7 @@ models:
               arguments:
                 values: ['Unusually high', 'Within normal range', 'Hours not reported']
 
-
-  # Q2: fact table: department overtime aggregate
+  # Q2: aggregate table, one row per department per fiscal year
   - name: agg_department_overtime
     description: >
       Q2: salary and overtime totals by department and fiscal year. Answers which departments

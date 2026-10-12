@@ -1,5 +1,4 @@
 -- Loads every not-yet-loaded file from the stage into the raw table.
--- Snowflake's load history skips files already loaded, so re-running is safe.
 -- Run: snow sql -f ingestion/02_copy_into_raw.sql -c loader
 
 USE ROLE LOADER_DEV;
